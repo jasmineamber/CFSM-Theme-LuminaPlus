@@ -671,10 +671,17 @@
   font-weight: 720;
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dstatus-price-chip svg {
   flex: 0 0 auto;
+}
+
+.dstatus-price-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 720px) {

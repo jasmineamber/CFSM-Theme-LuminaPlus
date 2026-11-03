@@ -176,12 +176,14 @@ function CompactInfoRow({
   value,
   unit,
   color,
+  title,
 }: {
   icon: ReactNode;
   label?: string;
   value: string;
   unit?: string;
   color?: string;
+  title?: string;
 }) {
   const style = color ? ({ "--compact-info-row-color": color } as CSSProperties) : undefined;
 
@@ -191,7 +193,7 @@ function CompactInfoRow({
         {icon}
         {label && <span>{label}</span>}
       </span>
-      <strong className="compact-node-info-row-value tabular">
+      <strong className="compact-node-info-row-value tabular" title={title}>
         {value}
         {unit && <small>{unit}</small>}
       </strong>
@@ -557,6 +559,7 @@ function CompactNodeInfoStrip({
             icon={<CircleDollarSign size={12} strokeWidth={2.2} />}
             // 后端 price 为空/0/-1 都表示免费，小卡片直接写「免费」而不是留白。
             value={renewalPrice || t("billing.free")}
+            title={renewalPrice || t("billing.free")}
             color={renewalPrice ? "var(--status-success)" : "var(--text-tertiary)"}
           />
         </CompactInfoTile>

@@ -309,6 +309,7 @@ function pickManagedThemeSettings(settings: ResolvedThemeSettings) {
     showRegionBar: settings.showRegionBar,
     showCardGroup: settings.showCardGroup,
     showCardPrice: settings.showCardPrice,
+    cardPriceMode: settings.cardPriceMode,
     homeGroupOrder: settings.homeGroupOrder,
     homeRegionOrder: settings.homeRegionOrder,
     homeDefaultGroup: settings.homeDefaultGroup,
@@ -2111,6 +2112,20 @@ export function ThemeManage() {
                       checked={draft.showCardPrice}
                       onPatch={patch}
                     />
+                    <label className="surface-inset flex min-w-0 flex-col gap-2 px-4 py-3">
+                      <span className="setting-subhead-title">{t("settings.cardPriceMode")}</span>
+                      <SettingSelect
+                        value={draft.cardPriceMode}
+                        aria-label={t("settings.cardPriceMode")}
+                        onChange={(event) =>
+                          patch("cardPriceMode", event.target.value as ThemeDraft["cardPriceMode"])
+                        }
+                      >
+                        <option value="original">{t("settings.cardPriceOriginal")}</option>
+                        <option value="converted">{t("settings.cardPriceConverted")}</option>
+                        <option value="both">{t("settings.cardPriceBoth")}</option>
+                      </SettingSelect>
+                    </label>
                     <ToggleRow
                       field="showConnections"
                       title={t("settings.showConnections")}

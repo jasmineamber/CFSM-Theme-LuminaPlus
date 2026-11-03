@@ -284,6 +284,11 @@ function currencyCode(value: unknown) {
   return CURRENCY_ALIASES[key] || (/^[A-Z]{3}$/.test(key) ? key : "");
 }
 
+/** 当前成本与卡片换算统一以人民币为目标；空货币也沿用成本统计的人民币默认值。 */
+export function isCnyCurrency(value: unknown) {
+  return currencyCode(value) === COST_TARGET_CURRENCY;
+}
+
 // 周期档位政策统一在 billing.normalizeBillingCycle;这里只取摊销天数(lifetime 为 -1)。
 function billingCycleDays(value: unknown): number {
   return normalizeBillingCycle(value as string | number | null | undefined).days;
@@ -428,7 +433,7 @@ export async function getExchangeRates(
   }
 }
 
-function convertToCny(
+export function convertToCny(
   amount: number,
   currency: unknown,
   rates: Record<string, number>,

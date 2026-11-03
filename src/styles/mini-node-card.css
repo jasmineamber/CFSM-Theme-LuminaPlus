@@ -77,7 +77,8 @@
 .mini-node-price-tag {
   display: inline-flex;
   height: 20px;
-  flex: 0 0 auto;
+  min-width: 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: 4px;
   padding: 0 0.5rem;
@@ -91,10 +92,18 @@
   font-weight: 720;
   line-height: 1;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mini-node-price-tag svg {
   flex: 0 0 auto;
+}
+
+.mini-node-price-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* V4 / V6 徽章在迷你卡里跟这一行的价格、标签同高同圆角（默认 22px，高出 2 像素）。 */
