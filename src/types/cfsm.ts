@@ -493,6 +493,7 @@ export interface ThemeSettings {
   showGroupTabs?: boolean;
   showRegionBar?: boolean;
   showCardGroup?: boolean;
+  cardPriceMode?: "original" | "converted" | "both";
   homeGroupOrder?: string[];
   /** 首页地区栏的顺序（地区代码），在首页直接拖动得到；没列进去的按默认规则排在后面。 */
   homeRegionOrder?: string[];

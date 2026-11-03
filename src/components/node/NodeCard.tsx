@@ -574,7 +574,7 @@ function FooterPriceChip({ renewalPrice, titled }: { renewalPrice: string; title
       title={titled ? t("card.renewalPriceTitle", { price: renewalPrice }) : undefined}
     >
       <CircleDollarSign size={12} strokeWidth={2.2} />
-      {renewalPrice}
+      <span className="dstatus-price-value">{renewalPrice}</span>
     </span>
   );
 }

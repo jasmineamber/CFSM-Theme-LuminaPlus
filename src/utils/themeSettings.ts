@@ -36,6 +36,7 @@ import {
 
 export type Appearance = "system" | "light" | "dark";
 export type NodeViewMode = "large" | "compact" | "mini" | "list";
+export type CardPriceMode = "original" | "converted" | "both";
 
 export interface ResolvedThemeSettings {
   defaultAppearance: Appearance;
@@ -58,6 +59,7 @@ export interface ResolvedThemeSettings {
   showRegionBar: boolean;
   showCardGroup: boolean;
   showCardPrice: boolean;
+  cardPriceMode: CardPriceMode;
   homeGroupOrder: string[];
   /** 地区栏顺序：在首页拖动地区标签得到（见 mergeHomeRegionOrder）。空 = 按默认地理优先级。 */
   homeRegionOrder: string[];
@@ -109,6 +111,7 @@ export const DEFAULT_THEME_SETTINGS: ResolvedThemeSettings = {
   showRegionBar: true,
   showCardGroup: true,
   showCardPrice: true,
+  cardPriceMode: "original",
   homeGroupOrder: [],
   homeRegionOrder: [],
   homeDefaultGroup: "",
@@ -270,6 +273,10 @@ export function normalizeThemeSettings(
     showRegionBar: enabledUnlessFalse(settings?.showRegionBar),
     showCardGroup: enabledUnlessFalse(settings?.showCardGroup),
     showCardPrice: enabledUnlessFalse(settings?.showCardPrice),
+    cardPriceMode:
+      settings?.cardPriceMode === "converted" || settings?.cardPriceMode === "both"
+        ? settings.cardPriceMode
+        : "original",
     homeGroupOrder: normalizeHomeGroupOrder(settings?.homeGroupOrder),
     homeRegionOrder: normalizeHomeRegionOrder(settings?.homeRegionOrder),
     homeDefaultGroup: normalizeHomeDefaultGroup(settings?.homeDefaultGroup),

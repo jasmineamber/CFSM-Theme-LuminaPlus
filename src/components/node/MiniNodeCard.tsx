@@ -84,7 +84,7 @@ function MiniChips({
       {renewalPrice && (
         <span className="mini-node-price-tag" title={t("card.renewalPriceTitle", { price: renewalPrice })}>
           <CircleDollarSign size={11} strokeWidth={2.2} />
-          {renewalPrice}
+          <span className="mini-node-price-value">{renewalPrice}</span>
         </span>
       )}
       <IpStackBadges ipv4={ipv4} ipv6={ipv6} />

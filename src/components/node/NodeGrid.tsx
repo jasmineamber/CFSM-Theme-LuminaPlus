@@ -20,7 +20,12 @@ import {
   formatByteRate,
   formatByteRateLabel,
 } from "@/utils/format";
-import { calculateCostSummary, formatCnyMoney, getExchangeRates } from "@/utils/cost";
+import {
+  calculateCostSummary,
+  formatCnyMoney,
+  getExchangeRates,
+  isCnyCurrency,
+} from "@/utils/cost";
 import { useHiddenNodeUuids } from "@/hooks/useVisibleNodes";
 import { speedRateColor } from "@/utils/metricTone";
 import {
@@ -50,6 +55,7 @@ import { NodeCard } from "./NodeCard";
 import { NodeListView } from "./NodeListView";
 import { RegionTabs } from "./RegionTabs";
 import { RenewalReminder } from "./RenewalReminder";
+import { CardPriceRatesContext } from "@/hooks/cardPriceRates";
 import type { NodeViewMode } from "@/utils/themeSettings";
 import type { RenewalReminderSource } from "@/utils/renewalReminder";
 
@@ -514,14 +520,18 @@ export function NodeGrid() {
     return () => window.clearTimeout(handle);
   }, [showCostDetailButton, showCostFloatingButton]);
 
-  // 资产入口存在时预热汇率，供概览、价格排序和资产页复用。
+  // 资产入口、价格排序或节点价格换算需要汇率时只查询一次，结果由概览和卡片共享。
   const costNeeded = showAssetCard || showCostFloatingButton;
+  const cardConversionNeeded =
+    themeSettings.isReady &&
+    themeSettings.cardPriceMode !== "original" &&
+    visibleMeta.some((node) => node.price > 0 && !isCnyCurrency(node.currency));
   const rateQuery = useQuery({
     queryKey: ["cost-rates", themeSettings.costRateApiUrl],
     queryFn: ({ signal }) => getExchangeRates(themeSettings.costRateApiUrl, { signal }),
     staleTime: 60 * 60 * 1000,
     // 「价格」排序也要汇率换算月化价,即便没显示资产卡也得拉一次;但空列表无需拉。
-    enabled: (costNeeded || sortField === "price") && hasNodes,
+    enabled: (costNeeded || sortField === "price" || cardConversionNeeded) && hasNodes,
     retry: 1,
   });
   // 汇率接口拿不到时不能整卡显示 "—"：人民币定价的节点根本不需要换算，照样统计，
@@ -531,6 +541,18 @@ export function NodeGrid() {
   // 只要不是正在请求且没有数据，就按「没有汇率」出结果。
   const ratesFetching = rateQuery.fetchStatus === "fetching" && !rateQuery.data;
   const costRates = rateQuery.data?.rates ?? (ratesFetching ? null : EMPTY_RATES);
+  const cardPriceRates = useMemo(
+    () => ({
+      rates: rateQuery.data?.rates ?? null,
+      // 包含已启用查询的初始 idle 帧；暂停或失败则按汇率不可用处理。
+      isLoading:
+        cardConversionNeeded &&
+        !rateQuery.data &&
+        (rateQuery.fetchStatus === "fetching" ||
+          (rateQuery.isPending && rateQuery.fetchStatus !== "paused")),
+    }),
+    [cardConversionNeeded, rateQuery.data, rateQuery.fetchStatus, rateQuery.isPending],
+  );
   const costSummary = useMemo(
     () =>
       costRates
@@ -793,32 +815,34 @@ export function NodeGrid() {
   }
 
   return (
-    <>
-      {homeHeader}
-      {(showGroupTabs || showHomeSort) && (
-        // 分组标签落首列、排序钉在末列右侧；窄屏时两者保持在同一控件栏内。
-        <div className={controlsWrapClassName} style={controlsStyle}>
-          {showGroupTabs && (
-            <GroupTabs
-              groups={groupOptions}
-              selectedGroup={selectedGroup}
-              onSelectGroup={setSelectedGroup}
-              onReorder={handleGroupReorder}
-              hasSort={showHomeSort}
-            />
-          )}
-          {showHomeSort && <HomeSortControl state={sort} />}
-        </div>
-      )}
-      {showRegionBar && (
-        <RegionTabs
-          regions={regionOptions}
-          selectedRegion={selectedRegion}
-          onSelectRegion={setSelectedRegion}
-          onReorder={handleRegionReorder}
-        />
-      )}
-      {isList ? <NodeListView uuids={orderedUuids} /> : gridElement}
-    </>
+    <CardPriceRatesContext.Provider value={cardPriceRates}>
+      <>
+        {homeHeader}
+        {(showGroupTabs || showHomeSort) && (
+          // 分组标签落首列、排序钉在末列右侧；窄屏时两者保持在同一控件栏内。
+          <div className={controlsWrapClassName} style={controlsStyle}>
+            {showGroupTabs && (
+              <GroupTabs
+                groups={groupOptions}
+                selectedGroup={selectedGroup}
+                onSelectGroup={setSelectedGroup}
+                onReorder={handleGroupReorder}
+                hasSort={showHomeSort}
+              />
+            )}
+            {showHomeSort && <HomeSortControl state={sort} />}
+          </div>
+        )}
+        {showRegionBar && (
+          <RegionTabs
+            regions={regionOptions}
+            selectedRegion={selectedRegion}
+            onSelectRegion={setSelectedRegion}
+            onReorder={handleRegionReorder}
+          />
+        )}
+        {isList ? <NodeListView uuids={orderedUuids} /> : gridElement}
+      </>
+    </CardPriceRatesContext.Provider>
   );
 }

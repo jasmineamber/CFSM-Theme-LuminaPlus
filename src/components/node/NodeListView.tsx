@@ -308,9 +308,9 @@ const NodeRow = memo(function NodeRow({ uuid }: { uuid: string }) {
           {(renewalPrice || footerTags.length > 0) && (
             <div className="node-list-chips" title={footerTags.length > 0 ? joinTagTitle(footerTags) : undefined}>
               {renewalPrice && (
-                <span className="dstatus-price-chip">
+                <span className="dstatus-price-chip" title={renewalPrice}>
                   <CircleDollarSign size={12} strokeWidth={2.2} />
-                  {renewalPrice}
+                  <span className="dstatus-price-value">{renewalPrice}</span>
                 </span>
               )}
               {footerTags.map((tag, index) => (

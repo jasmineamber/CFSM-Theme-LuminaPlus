@@ -1,5 +1,6 @@
 import { t } from "@/i18n";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+import { CardPriceRatesContext } from "@/hooks/cardPriceRates";
 import { useHourlyClock, useMinuteClock } from "@/hooks/useClock";
 import { useNodeCardSnapshots, useShowThreeNetDetails } from "@/hooks/useNode";
 import {
@@ -15,7 +16,7 @@ import { useThemeSettings } from "@/hooks/useThemeSettings";
 import { carrierTaskName } from "@/services/cfsm/mappers";
 import { useCarrierNames, useLatencyWindowMs } from "@/hooks/usePublicConfig";
 import type { HomepagePingDisplayLine, HomepagePingLine } from "@/types/cfsm";
-import { formatRenewalPrice } from "@/utils/billing";
+import { formatCardRenewalPrice } from "@/utils/cardPrice";
 import { getExpireTextColor } from "@/utils/expireStatus";
 import {
   formatBytes,
@@ -60,10 +61,13 @@ export function useNodeCardModel(
   const {
     showCardGroup,
     showCardPrice,
+    cardPriceMode,
     homepagePingBindings,
     enableHomepageMultiPing,
     homepageMultiPingTaskIds,
   } = useThemeSettings();
+  const { rates: cardPriceRates, isLoading: cardPriceRatesLoading } =
+    useContext(CardPriceRatesContext);
   // 后端关掉「输出首页详细 ping/loss」时那三条线一条数据都没有，直接回退单线路，
   // 免得画出三条空线（口径见 useShowThreeNetDetails）。
   const showThreeNetDetails = useShowThreeNetDetails();
@@ -192,6 +196,13 @@ export function useNodeCardModel(
         : group
           ? [{ label: group, color: "gray" }]
           : [];
+    const renewalPrice = formatCardRenewalPrice(
+      meta,
+      cardPriceMode,
+      cardPriceRates,
+      cardPriceRatesLoading,
+    );
+
     return {
       tags,
       footerTags: fallbackFooterTags,
@@ -199,14 +210,13 @@ export function useNodeCardModel(
       subtitle: joinDisplayParts(subtitleParts),
       expire: formatExpireDays(meta.expired_at, now),
       expireColor: getExpireTextColor(meta.expired_at, now),
-      // 「卡片显示价格」只作用于大卡片（NodeCard 自己收敛）；小卡片等布局照旧显示，
-      // 未填价格显示「免费」。
+      // 「卡片显示价格」只作用于大卡片（NodeCard 自己收敛）；价格模式与账单文案则供各视图共用。
       showCardPrice,
-      renewalPrice: formatRenewalPrice(meta),
+      renewalPrice,
       osName: resolveOsInfo(meta.os).name,
       loadBaseline: meta.cpu_cores > 0 ? meta.cpu_cores : 4,
     };
-  }, [meta, now, showCardGroup, showCardPrice]);
+  }, [cardPriceMode, cardPriceRates, cardPriceRatesLoading, meta, now, showCardGroup, showCardPrice]);
 
   // ping 派生的颜色只在 ping item 变化时才变。
   const pingModel = useMemo(
