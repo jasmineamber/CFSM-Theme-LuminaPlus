@@ -17,6 +17,8 @@ interface Params {
   direction: HomeSortDirection;
   nameByUuid: Map<string, string>;
   priceByUuid: Map<string, number | null>;
+  groupOrder: readonly string[];
+  prioritizeGroupOrder: boolean;
   /** 离线节点排最前面（设置项 offlineNodesFirst）。 */
   offlineFirst?: boolean;
 }
@@ -32,11 +34,17 @@ export function useHomeNodeOrder({
   direction,
   nameByUuid,
   priceByUuid,
+  groupOrder,
+  prioritizeGroupOrder,
   offlineFirst = false,
 }: Params): HomeNodeSummary[] {
-  // 定时重排跑在 effect 里（依赖只有 field/direction），设置改了靠 ref 带进去，不必重开定时器。
+  // 定时重排跑在 effect 里；设置改了靠 ref 带进去，重开定时器时立即按新配置重排。
   const offlineFirstRef = useRef(offlineFirst);
   offlineFirstRef.current = offlineFirst;
+  const groupOrderRef = useRef(groupOrder);
+  groupOrderRef.current = groupOrder;
+  const prioritizeGroupOrderRef = useRef(prioritizeGroupOrder);
+  prioritizeGroupOrderRef.current = prioritizeGroupOrder;
   const ringRef = useRef<Map<string, number[]>>(new Map());
   const nodesRef = useRef(nodes);
   useEffect(() => {
@@ -71,8 +79,19 @@ export function useHomeNodeOrder({
       priceByUuid,
       speedActive: EMPTY_SET,
       offlineFirst,
+      groupOrder,
+      prioritizeGroupOrder,
     });
-  }, [field, direction, nodes, nameByUuid, priceByUuid, offlineFirst]);
+  }, [
+    field,
+    direction,
+    nodes,
+    nameByUuid,
+    priceByUuid,
+    offlineFirst,
+    groupOrder,
+    prioritizeGroupOrder,
+  ]);
 
   const [speedUuids, setSpeedUuids] = useState<string[]>([]);
   const activeRef = useRef<Set<string>>(new Set());
@@ -102,6 +121,8 @@ export function useHomeNodeOrder({
         priceByUuid: EMPTY_PRICE_MAP,
         speedActive: next,
         offlineFirst: offlineFirstRef.current,
+        groupOrder: groupOrderRef.current,
+        prioritizeGroupOrder: prioritizeGroupOrderRef.current,
       });
       const nextUuids = ordered.map((node) => node.uuid);
       setSpeedUuids((previous) =>
@@ -117,8 +138,17 @@ export function useHomeNodeOrder({
   }, [field, direction]);
 
   const speedOrder = useMemo(
-    () => (field === "speed" ? reconcileSpeedOrder(nodes, speedUuids, offlineFirst) : null),
-    [field, nodes, speedUuids, offlineFirst],
+    () =>
+      field === "speed"
+        ? reconcileSpeedOrder(
+            nodes,
+            speedUuids,
+            offlineFirst,
+            groupOrder,
+            prioritizeGroupOrder,
+          )
+        : null,
+    [field, nodes, speedUuids, offlineFirst, groupOrder, prioritizeGroupOrder],
   );
 
   return (field === "speed" ? speedOrder : stableOrder) ?? nodes;

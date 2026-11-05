@@ -468,6 +468,8 @@ export const zh = {
   "settings.sortAndGroup": "排序与分组",
   "settings.enableSort": "启用排序切换",
   "settings.enableSortDesc": "首页显示排序控件，访客可临时切换排序方式。关掉后所有人都按下面定的顺序看。",
+  "settings.prioritizeGroupSort": "优先按分组排序",
+  "settings.prioritizeGroupSortDesc": "先按分组栏顺序排列节点，再按当前排序维度排列各组内的节点。",
   "settings.defaultSortField": "默认排序维度",
   "settings.defaultDirection": "默认方向",
   "settings.ascending": "升序",

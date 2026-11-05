@@ -316,6 +316,7 @@ function pickManagedThemeSettings(settings: ResolvedThemeSettings) {
     enableHomeSort: settings.enableHomeSort,
     homeSortField: settings.homeSortField,
     homeSortDirection: settings.homeSortDirection,
+    prioritizeHomeGroupSort: settings.prioritizeHomeGroupSort,
     offlineNodesFirst: settings.offlineNodesFirst,
     showCostSummary: settings.showCostSummary,
     renewalReminderDays: settings.renewalReminderDays,
@@ -1848,6 +1849,15 @@ export function ThemeManage() {
                   checked={draft.enableHomeSort}
                   onPatch={patch}
                 />
+                <div className="mt-3">
+                  <ToggleRow
+                    field="prioritizeHomeGroupSort"
+                    title={t("settings.prioritizeGroupSort")}
+                    desc={t("settings.prioritizeGroupSortDesc")}
+                    checked={draft.prioritizeHomeGroupSort}
+                    onPatch={patch}
+                  />
+                </div>
 
                 {/* 四个字段一套网格：标题在上、控件撑满格子。宽窄不一、说明乱飘是上一版「看着乱」的来源。 */}
                 <div className="setting-grid is-triple mt-4">

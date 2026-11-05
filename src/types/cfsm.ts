@@ -500,6 +500,8 @@ export interface ThemeSettings {
   enableHomeSort?: boolean;
   homeSortField?: "default" | "name" | "speed" | "traffic" | "price";
   homeSortDirection?: "asc" | "desc";
+  /** 先按首页分组栏顺序排列，再在每个分组内应用当前排序维度。 */
+  prioritizeHomeGroupSort?: boolean;
   showCostSummary?: boolean;
   showCostSummaryFloatingButton?: boolean;
   showOverviewRatings?: boolean;

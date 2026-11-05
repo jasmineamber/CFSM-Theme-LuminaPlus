@@ -68,6 +68,8 @@ export interface ResolvedThemeSettings {
   enableHomeSort: boolean;
   homeSortField: HomeSortField;
   homeSortDirection: HomeSortDirection;
+  /** 首页节点先按分组栏顺序排列，再在组内应用当前排序维度。 */
+  prioritizeHomeGroupSort: boolean;
   /** 离线节点排最前面；默认 false = 置底。 */
   offlineNodesFirst: boolean;
   showCostSummary: boolean;
@@ -118,6 +120,7 @@ export const DEFAULT_THEME_SETTINGS: ResolvedThemeSettings = {
   enableHomeSort: true,
   homeSortField: "default",
   homeSortDirection: HOME_SORT_NATURAL_DIRECTION.default,
+  prioritizeHomeGroupSort: false,
   offlineNodesFirst: false,
   showCostSummary: true,
   renewalReminderDays: DEFAULT_RENEWAL_REMINDER_DAYS,
@@ -282,6 +285,7 @@ export function normalizeThemeSettings(
     homeDefaultGroup: normalizeHomeDefaultGroup(settings?.homeDefaultGroup),
     enableHomeSort: enabledUnlessFalse(settings?.enableHomeSort),
     ...normalizeHomeSortDefault(settings?.homeSortField, settings?.homeSortDirection),
+    prioritizeHomeGroupSort: settings?.prioritizeHomeGroupSort === true,
     offlineNodesFirst: settings?.offlineNodesFirst === true,
     // 老配置里资产入口是两个开关（卡内按钮 / 悬浮按钮），合并成一个：任一开着就还给入口，
     // 放哪儿由首页自己判断（总览显示时放卡内，否则悬浮）。

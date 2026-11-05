@@ -1,7 +1,7 @@
 import { compareText, t } from "@/i18n";
 import type { HomeNodeSummary } from "@/services/wsStore";
 
-// 首页临时排序；默认使用后端 weight，离线节点始终沉底。
+// 首页临时排序；默认使用后端 weight，离线节点按设置置顶或置底。
 
 export type HomeSortField = "default" | "name" | "speed" | "traffic" | "price";
 export type HomeSortDirection = "asc" | "desc";
@@ -57,19 +57,36 @@ export interface HomeSortContext {
   speedActive: Set<string>;
   /** 离线节点排最前面（设置项 offlineNodesFirst）；缺省置底。 */
   offlineFirst?: boolean;
+  /** 首页分组栏当前顺序；新分组已由调用方接在配置顺序之后。 */
+  groupOrder?: readonly string[];
+  /** 分组优先时：离线位置全局优先，其余节点先按分组再按排序维度。 */
+  prioritizeGroupOrder?: boolean;
 }
 
-// 0=参与排序，1=无有效排序值，2=离线；后两段按 weight 排列。
+// 未启用分组优先时：0=参与排序，1=无有效排序值，2=离线；后两段按 weight 排列。
 // 离线置顶时给 -1：排在所有在线节点之前，段内仍按 weight。
 function segmentOf(
   node: HomeNodeSummary,
   field: HomeSortField,
   ctx: HomeSortContext,
 ): -1 | 0 | 1 | 2 {
-  if (node.online === false) return ctx.offlineFirst ? -1 : 2;
+  if (node.online === false && !ctx.prioritizeGroupOrder) return ctx.offlineFirst ? -1 : 2;
   if (field === "speed") return ctx.speedActive.has(node.uuid) ? 0 : 1;
   if (field === "price") return ctx.priceByUuid.get(node.uuid) != null ? 0 : 1;
   return 0;
+}
+
+function groupLabel(node: HomeNodeSummary): string {
+  return node.group.trim();
+}
+
+function groupRank(
+  node: HomeNodeSummary,
+  orderIndex: ReadonlyMap<string, number>,
+  fallback: number,
+) {
+  const group = groupLabel(node);
+  return group ? (orderIndex.get(group) ?? fallback) : fallback + 1;
 }
 
 function primaryValue(
@@ -92,7 +109,7 @@ function primaryValue(
   }
 }
 
-/** 三段式稳定排序，实时速率状态由调用方注入。 */
+/** 稳定排序；实时速率状态和可选的分组优先级由调用方注入。 */
 export function sortHomeNodes(
   nodes: HomeNodeSummary[],
   field: HomeSortField,
@@ -100,16 +117,30 @@ export function sortHomeNodes(
   ctx: HomeSortContext,
 ): HomeNodeSummary[] {
   const factor = direction === "asc" ? 1 : -1;
+  const groupOrderIndex = new Map(
+    (ctx.groupOrder ?? []).map((group, index) => [group, index] as const),
+  );
+  const groupFallbackRank = groupOrderIndex.size;
   // 预计算比较键，避免 comparator 重复查 Map。
   return nodes
     .map((node) => ({
       node,
+      offline: node.online === false,
+      groupRank: groupRank(node, groupOrderIndex, groupFallbackRank),
       segment: segmentOf(node, field, ctx),
       primary: primaryValue(node, field, ctx),
       weight: node.weight,
       uuid: node.uuid,
     }))
     .sort((a, b) => {
+      if (ctx.prioritizeGroupOrder) {
+        // 离线置顶/置底是全局规则；组内仍走同一套排序维度。
+        if (a.offline !== b.offline) {
+          if (ctx.offlineFirst) return a.offline ? -1 : 1;
+          return a.offline ? 1 : -1;
+        }
+        if (a.groupRank !== b.groupRank) return a.groupRank - b.groupRank;
+      }
       if (a.segment !== b.segment) return a.segment - b.segment;
 
       if (a.segment === 0) {
@@ -127,11 +158,13 @@ export function sortHomeNodes(
     .map((entry) => entry.node);
 }
 
-/** 恢复冻结顺序，同时让新离线节点立即沉底（或按设置置顶）。 */
+/** 恢复冻结顺序，同时立即应用离线位置和可选的分组顺序。 */
 export function reconcileSpeedOrder(
   nodes: HomeNodeSummary[],
   frozenUuids: string[],
   offlineFirst = false,
+  groupOrder: readonly string[] = [],
+  prioritizeGroupOrder = false,
 ): HomeNodeSummary[] {
   const byUuid = new Map(nodes.map((node) => [node.uuid, node] as const));
   const online: HomeNodeSummary[] = [];
@@ -148,5 +181,24 @@ export function reconcileSpeedOrder(
   for (const node of nodes) {
     if (!used.has(node.uuid)) place(node);
   }
-  return offlineFirst ? [...offline, ...online] : [...online, ...offline];
+  const rankByGroup = prioritizeGroupOrder
+    ? new Map(groupOrder.map((group, index) => [group, index] as const))
+    : null;
+  const fallbackRank = rankByGroup?.size ?? 0;
+  const orderByGroup = (segment: HomeNodeSummary[]) => {
+    if (!rankByGroup) return segment;
+    return segment
+      .map((node, index) => ({
+        node,
+        index,
+        rank: groupRank(node, rankByGroup, fallbackRank),
+      }))
+      .sort((a, b) => a.rank - b.rank || a.index - b.index)
+      .map(({ node }) => node);
+  };
+  const orderedOnline = orderByGroup(online);
+  const orderedOffline = orderByGroup(offline);
+  return offlineFirst
+    ? [...orderedOffline, ...orderedOnline]
+    : [...orderedOnline, ...orderedOffline];
 }
