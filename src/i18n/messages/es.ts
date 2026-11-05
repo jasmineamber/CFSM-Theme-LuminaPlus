@@ -466,6 +466,8 @@ export const es: Messages = {
   "settings.sortAndGroup": "Orden y grupos",
   "settings.enableSort": "Permitir cambiar el orden",
   "settings.enableSortDesc": "Muestra el control de orden en el inicio para que los visitantes cambien el orden. Si está desactivado, todos ven el orden definido abajo.",
+  "settings.prioritizeGroupSort": "Priorizar el orden de grupos",
+  "settings.prioritizeGroupSortDesc": "Ordena primero los servidores según las pestañas de grupo y luego cada grupo según la dimensión seleccionada.",
   "settings.defaultSortField": "Orden predeterminado",
   "settings.defaultDirection": "Dirección predeterminada",
   "settings.ascending": "Ascendente",

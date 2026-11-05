@@ -466,6 +466,8 @@ export const en: Messages = {
   "settings.sortAndGroup": "Sorting and groups",
   "settings.enableSort": "Let visitors change sorting",
   "settings.enableSortDesc": "Shows the sort control on the home page so visitors can change the order for themselves. When off, everyone sees the order set below.",
+  "settings.prioritizeGroupSort": "Prioritize group order",
+  "settings.prioritizeGroupSortDesc": "Sort servers by the group tab order first, then sort servers within each group by the selected dimension.",
   "settings.defaultSortField": "Default sort",
   "settings.defaultDirection": "Default direction",
   "settings.ascending": "Ascending",

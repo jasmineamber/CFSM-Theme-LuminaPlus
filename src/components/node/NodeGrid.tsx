@@ -652,6 +652,8 @@ export function NodeGrid() {
     direction: sortDirection,
     nameByUuid,
     priceByUuid,
+    groupOrder: groupOptions,
+    prioritizeGroupOrder: themeSettings.isReady && themeSettings.prioritizeHomeGroupSort,
   });
 
   useEffect(() => {
